@@ -1,0 +1,22 @@
+@model EventFeed.Producer.Models.HomeModel
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>Event Feed Demo - Consumer</title>
+</head>
+<body>
+<div>
+    <h2>Number of clicks: @Model.ClickCount</h2>
+    
+    <form method="post">
+        <button asp-controller="Home" asp-action="Click">Click!</button>
+    </form>
+</div>
+</body>
+</html>
