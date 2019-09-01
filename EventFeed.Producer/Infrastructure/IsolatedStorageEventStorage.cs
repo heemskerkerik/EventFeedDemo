@@ -10,7 +10,7 @@ using Newtonsoft.Json;
 
 namespace EventFeed.Producer.Infrastructure
 {
-    internal class IsolatedStorageEventStorage: IWriteEventStorage
+    internal class IsolatedStorageEventStorage: IWriteEventStorage, IReadEventStorage
     {
         public void StoreEvent(object @event)
         {
@@ -162,6 +162,45 @@ namespace EventFeed.Producer.Infrastructure
         }
 
         private string GetPageFileName(string pageId) => PageFileNamePrefix + pageId + ".dat";
+
+        public EventFeedPage GetLatestEvents()
+        {
+            var allPages = GetPageList();
+
+            if (!allPages.Any())
+                return new EventFeedPage(
+                    id: null,
+                    previousPageId: null,
+                    nextPageId: null,
+                    events: Array.Empty<Event>()
+                );
+
+            string pageId = allPages.Last();
+            string previousPageId = allPages.SkipLast(1).LastOrDefault();
+            var events = ReadEventsFromPage(pageId).Select(ConvertEventEnvelopeToEvent).ToList();
+
+            return new EventFeedPage(
+                id: pageId,
+                previousPageId: previousPageId,
+                nextPageId: null,
+                events: events
+            );
+        }
+
+        private Event ConvertEventEnvelopeToEvent(EventEnvelope envelope)
+        {
+            return new Event(
+                id: envelope.Id,
+                occurred: envelope.Occurred,
+                type: envelope.EventType,
+                payload: envelope.Payload
+            );
+        }
+
+        public EventFeedPage GetArchivedEvents(string pageId)
+        {
+            throw new NotImplementedException();
+        }
         
         private readonly IsolatedStorageFile _storage = IsolatedStorageFile.GetUserStoreForApplication();
 

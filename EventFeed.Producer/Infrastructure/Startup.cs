@@ -13,6 +13,7 @@ namespace EventFeed.Producer.Infrastructure
             services.AddTransient<IClickService, ClickService>();
             services.AddSingleton<IClickStorage, IsolatedStorageClickStorage>();
             services.AddSingleton<IWriteEventStorage, IsolatedStorageEventStorage>();
+            services.AddSingleton(sp => (IReadEventStorage) sp.GetService<IWriteEventStorage>());
         }
 
         public void Configure(IApplicationBuilder app)
