@@ -17,25 +17,28 @@ namespace EventFeed.Producer.Controllers
         public async Task<IActionResult> GetLatestEventsAsync()
         {
             var page = _storage.GetLatestEvents();
-
             var stream = new MemoryStream();
-            
+
+            await RenderPageToStreamAsync(page, stream);
+
+            return File(stream, "application/atom+xml");
+        }
+
+        private async Task RenderPageToStreamAsync(EventFeedPage page, Stream stream)
+        {
+            string latestEventPageId = _storage.GetLatestEventPageId();
+
             using (var xmlWriter = XmlWriter.Create(stream, new XmlWriterSettings { Async = true, Indent = false, }))
             {
                 var writer = new AtomFeedWriter(xmlWriter);
-                
+
                 await writer.WriteId("urn:publicid:EventFeedDemo");
                 await writer.WriteUpdated(page.Events.Select(e => e.Occurred).DefaultIfEmpty(_epoch).Max());
                 await writer.Write(
                     new SyndicationLink(
-                        new Uri(
-                            Url.Action(
-                                action: "GetLatestEventsAsync",
-                                controller: "EventFeed",
-                                values: null,
-                                protocol: Request.Scheme
-                            )
-                        ),
+                        page.Id == latestEventPageId
+                            ? GetLatestEventsUri()
+                            : GetArchivedEventsUri(page.Id),
                         AtomLinkTypes.Self
                     )
                 );
@@ -43,15 +46,17 @@ namespace EventFeed.Producer.Controllers
                 if (page.PreviousPageId != null)
                     await writer.Write(
                         new SyndicationLink(
-                            new Uri(
-                                Url.Action(
-                                    action: "GetArchivedEventsAsync",
-                                    controller: "EventFeed",
-                                    values: new { page = page.PreviousPageId },
-                                    protocol: Request.Scheme
-                                )
-                            ),
+                            GetArchivedEventsUri(page.PreviousPageId),
                             "prev-archive"
+                        )
+                    );
+                if (page.NextPageId != null)
+                    await writer.Write(
+                        new SyndicationLink(
+                            page.NextPageId != _storage.GetLatestEventPageId()
+                                ? GetArchivedEventsUri(page.NextPageId)
+                                : GetLatestEventsUri(),
+                            "next-archive"
                         )
                     );
 
@@ -63,8 +68,6 @@ namespace EventFeed.Producer.Controllers
             }
 
             stream.Position = 0;
-
-            return File(stream, "application/atom+xml");
 
             AtomEntry ConvertEventToAtomEntry(Event @event)
             {
@@ -81,12 +84,50 @@ namespace EventFeed.Producer.Controllers
 
                 return entry;
             }
+
+            Uri GetLatestEventsUri()
+            {
+                return new Uri(
+                    Url.Action(
+                        action: "GetLatestEventsAsync",
+                        controller: "EventFeed",
+                        values: null,
+                        protocol: Request.Scheme
+                    )
+                );
+            }
+
+            Uri GetArchivedEventsUri(string pageId)
+            {
+                return new Uri(
+                    Url.Action(
+                        action: "GetArchivedEventsAsync",
+                        controller: "EventFeed",
+                        values: new { pageId = pageId },
+                        protocol: Request.Scheme
+                    )
+                );
+            }
         }
 
-        [HttpGet("events/{page}")]
-        public IActionResult GetArchivedEventsAsync(string page)
+        [HttpGet("events/{pageId}")]
+        public async Task<IActionResult> GetArchivedEventsAsync(string pageId)
         {
-            throw new NotImplementedException();
+            EventFeedPage page;
+            try
+            {
+                page = _storage.GetArchivedEvents(pageId);
+            }
+            catch (EventFeedPageNotFoundException)
+            {
+                return NotFound();
+            }
+
+            var stream = new MemoryStream();
+
+            await RenderPageToStreamAsync(page, stream);
+
+            return File(stream, "application/atom+xml");
         }
 
         public EventFeedController(IReadEventStorage storage)

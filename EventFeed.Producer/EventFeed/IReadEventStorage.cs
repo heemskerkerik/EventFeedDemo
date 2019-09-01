@@ -4,5 +4,6 @@ namespace EventFeed.Producer.EventFeed
     {
         EventFeedPage GetLatestEvents();
         EventFeedPage GetArchivedEvents(string pageId);
+        string GetLatestEventPageId();
     }
 }

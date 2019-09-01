@@ -165,26 +165,21 @@ namespace EventFeed.Producer.Infrastructure
 
         public EventFeedPage GetLatestEvents()
         {
-            var allPages = GetPageList();
+            lock (this)
+            {
+                var allPages = GetPageList();
 
-            if (!allPages.Any())
-                return new EventFeedPage(
-                    id: null,
-                    previousPageId: null,
-                    nextPageId: null,
-                    events: Array.Empty<Event>()
-                );
+                if (!allPages.Any())
+                    return new EventFeedPage(
+                        id: null,
+                        previousPageId: null,
+                        nextPageId: null,
+                        events: Array.Empty<Event>()
+                    );
 
-            string pageId = allPages.Last();
-            string previousPageId = allPages.SkipLast(1).LastOrDefault();
-            var events = ReadEventsFromPage(pageId).Select(ConvertEventEnvelopeToEvent).ToList();
-
-            return new EventFeedPage(
-                id: pageId,
-                previousPageId: previousPageId,
-                nextPageId: null,
-                events: events
-            );
+                string pageId = allPages.Last();
+                return GetEventFeedPage(pageId);
+            }
         }
 
         private Event ConvertEventEnvelopeToEvent(EventEnvelope envelope)
@@ -199,7 +194,43 @@ namespace EventFeed.Producer.Infrastructure
 
         public EventFeedPage GetArchivedEvents(string pageId)
         {
-            throw new NotImplementedException();
+            lock (this)
+            {
+                return GetEventFeedPage(pageId);
+            }
+        }
+
+        public string GetLatestEventPageId()
+        {
+            lock (this)
+            {
+                return GetPageList().LastOrDefault();
+            }
+        }
+
+        private EventFeedPage GetEventFeedPage(string pageId)
+        {
+            var allPages = GetPageList();
+            int index = allPages.IndexOf(pageId);
+
+            if (index == -1)
+                throw new EventFeedPageNotFoundException();
+
+            string previousPageId = index > 0
+                                        ? allPages[index - 1]
+                                        : null;
+            string nextPageId = index < allPages.Count - 1
+                                    ? allPages[index + 1]
+                                    : null;
+            
+            var events = ReadEventsFromPage(pageId).Select(ConvertEventEnvelopeToEvent).ToList();
+
+            return new EventFeedPage(
+                id: pageId,
+                previousPageId: previousPageId,
+                nextPageId: nextPageId,
+                events: events
+            );
         }
         
         private readonly IsolatedStorageFile _storage = IsolatedStorageFile.GetUserStoreForApplication();
