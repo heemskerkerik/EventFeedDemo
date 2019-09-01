@@ -1,4 +1,5 @@
 using EventFeed.Producer.Clicks;
+using EventFeed.Producer.EventFeed;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -11,6 +12,7 @@ namespace EventFeed.Producer.Infrastructure
             services.AddMvc();
             services.AddTransient<IClickService, ClickService>();
             services.AddSingleton<IClickStorage, IsolatedStorageClickStorage>();
+            services.AddSingleton<IWriteEventStorage, IsolatedStorageEventStorage>();
         }
 
         public void Configure(IApplicationBuilder app)
