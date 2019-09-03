@@ -1,118 +1,47 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
-using System.Xml;
 using EventFeed.Producer.EventFeed;
+using EventFeed.Producer.EventFeed.Atom;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.SyndicationFeed;
-using Microsoft.SyndicationFeed.Atom;
+using Microsoft.Net.Http.Headers;
 
 namespace EventFeed.Producer.Controllers
 {
     [ApiController]
-    public class EventFeedController: ControllerBase
+    public class EventFeedController: ControllerBase, IEventFeedUriProvider
     {
         [HttpGet("events/latest")]
         public async Task<IActionResult> GetLatestEventsAsync()
         {
+            if (!ClientAcceptsAtomResponse())
+                return StatusCode(StatusCodes.Status406NotAcceptable);
+
             var page = _storage.GetLatestEvents();
-            var stream = new MemoryStream();
-
-            await RenderPageToStreamAsync(page, stream);
-
-            return File(stream, "application/atom+xml");
+            return await RenderFeedAsync(page);
         }
 
-        private async Task RenderPageToStreamAsync(EventFeedPage page, Stream stream)
+        private bool ClientAcceptsAtomResponse() =>
+            Request.GetTypedHeaders().Accept?.Contains(_atomMediaType) ?? true;
+
+        private async Task<IActionResult> RenderFeedAsync(EventFeedPage page)
         {
-            string latestEventPageId = _storage.GetLatestEventPageId();
+            var renderer = new AtomRenderer(page, _storage, this);
+            var stream = new MemoryStream();
 
-            using (var xmlWriter = XmlWriter.Create(stream, new XmlWriterSettings { Async = true, Indent = false, }))
-            {
-                var writer = new AtomFeedWriter(xmlWriter);
-
-                await writer.WriteId("urn:publicid:EventFeedDemo");
-                await writer.WriteUpdated(page.Events.Select(e => e.Occurred).DefaultIfEmpty(_epoch).Max());
-                await writer.Write(
-                    new SyndicationLink(
-                        page.Id == latestEventPageId
-                            ? GetLatestEventsUri()
-                            : GetArchivedEventsUri(page.Id),
-                        AtomLinkTypes.Self
-                    )
-                );
-
-                if (page.PreviousPageId != null)
-                    await writer.Write(
-                        new SyndicationLink(
-                            GetArchivedEventsUri(page.PreviousPageId),
-                            "prev-archive"
-                        )
-                    );
-                if (page.NextPageId != null)
-                    await writer.Write(
-                        new SyndicationLink(
-                            page.NextPageId != _storage.GetLatestEventPageId()
-                                ? GetArchivedEventsUri(page.NextPageId)
-                                : GetLatestEventsUri(),
-                            "next-archive"
-                        )
-                    );
-
-                foreach (var @event in page.Events.Reverse())
-                {
-                    var entry = ConvertEventToAtomEntry(@event);
-                    await writer.Write(entry);
-                }
-            }
+            await renderer.RenderAsync(stream);
 
             stream.Position = 0;
-
-            AtomEntry ConvertEventToAtomEntry(Event @event)
-            {
-                var entry = new AtomEntry
-                            {
-                                Id = "urn:uuid:" + @event.Id,
-                                Published = @event.Occurred,
-                                LastUpdated = @event.Occurred,
-                                Title = @event.Id,
-                                ContentType = @event.Type,
-                                Description = @event.Payload,
-                            };
-                entry.AddContributor(_author);
-
-                return entry;
-            }
-
-            Uri GetLatestEventsUri()
-            {
-                return new Uri(
-                    Url.Action(
-                        action: "GetLatestEventsAsync",
-                        controller: "EventFeed",
-                        values: null,
-                        protocol: Request.Scheme
-                    )
-                );
-            }
-
-            Uri GetArchivedEventsUri(string pageId)
-            {
-                return new Uri(
-                    Url.Action(
-                        action: "GetArchivedEventsAsync",
-                        controller: "EventFeed",
-                        values: new { pageId = pageId },
-                        protocol: Request.Scheme
-                    )
-                );
-            }
+            return File(stream, contentType: AtomContentType);
         }
 
         [HttpGet("events/{pageId}")]
         public async Task<IActionResult> GetArchivedEventsAsync(string pageId)
         {
+            if (!ClientAcceptsAtomResponse())
+                return StatusCode(StatusCodes.Status406NotAcceptable);
+            
             EventFeedPage page;
             try
             {
@@ -123,12 +52,30 @@ namespace EventFeed.Producer.Controllers
                 return NotFound();
             }
 
-            var stream = new MemoryStream();
-
-            await RenderPageToStreamAsync(page, stream);
-
-            return File(stream, "application/atom+xml");
+            return await RenderFeedAsync(page);
         }
+
+        [NonAction]
+        public Uri GetLatestEventsUri() =>
+            new Uri(
+                Url.Action(
+                    action: "GetLatestEventsAsync",
+                    controller: "EventFeed",
+                    values: null,
+                    protocol: Request.Scheme
+                )
+            );
+
+        [NonAction]
+        public Uri GetArchivedPageUri(string pageId) =>
+            new Uri(
+                Url.Action(
+                    action: "GetArchivedEventsAsync",
+                    controller: "EventFeed",
+                    values: new { pageId = pageId },
+                    protocol: Request.Scheme
+                )
+            );
 
         public EventFeedController(IReadEventStorage storage)
         {
@@ -137,12 +84,7 @@ namespace EventFeed.Producer.Controllers
 
         private readonly IReadEventStorage _storage;
 
-        private static readonly DateTimeOffset _epoch = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
-
-        private static readonly SyndicationPerson _author = new SyndicationPerson(
-            "EventFeedDemo",
-            "noreply@eventfeed-demo.eu",
-            AtomContributorTypes.Author
-        );
+        private const string AtomContentType = "application/atom+xml";
+        private static readonly MediaTypeHeaderValue _atomMediaType = new MediaTypeHeaderValue(AtomContentType);
     }
 }
