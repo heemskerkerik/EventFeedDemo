@@ -1,6 +1,6 @@
 const connection = new signalR.HubConnectionBuilder()
     .withUrl("/realtime/clicks")
-    .configureLogging(signalR.LogLevel.Trace)
+    .configureLogging(signalR.LogLevel.Information)
     .build();
 
 connection
