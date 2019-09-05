@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.IO;
 using System.IO.IsolatedStorage;
 using System.Linq;
+using System.Reactive.Subjects;
 using EventFeed.Producer.Clicks;
 using EventFeed.Producer.EventFeed;
 using Newtonsoft.Json;
@@ -12,14 +13,20 @@ namespace EventFeed.Producer.Infrastructure
 {
     internal class IsolatedStorageEventStorage: IWriteEventStorage, IReadEventStorage
     {
+        private readonly Subject<string> _notifySubject;
+
         public void StoreEvent(object @event)
         {
+            EventEnvelope envelope;
+            
             lock (this)
             {
-                var envelope = CreateEnvelope();
+                envelope = CreateEnvelope();
                 string pageId = DeterminePageId();
                 AppendEvent(pageId, envelope);
             }
+
+            _notifySubject.OnNext(envelope.Id);
 
             string DeterminePageId()
             {
@@ -84,10 +91,10 @@ namespace EventFeed.Producer.Infrastructure
                 }
             }
 
-            void AppendEvent(string pageId, EventEnvelope envelope)
+            void AppendEvent(string pageId, EventEnvelope eventEnvelope)
             {
                 var events = ReadEventsFromPage(pageId);
-                var newEvents = events.Add(envelope);
+                var newEvents = events.Add(eventEnvelope);
                 
                 StorePage(pageId, newEvents);
             }
@@ -231,6 +238,11 @@ namespace EventFeed.Producer.Infrastructure
                 nextPageId: nextPageId,
                 events: events
             );
+        }
+
+        public IsolatedStorageEventStorage(Subject<string> notifySubject)
+        {
+            _notifySubject = notifySubject;
         }
         
         private readonly IsolatedStorageFile _storage = IsolatedStorageFile.GetUserStoreForApplication();

@@ -34,8 +34,13 @@ namespace EventFeed.Consumer.Infrastructure
                         dispatcher: sp.GetRequiredService<IEventDispatcher>(),
                         logger: sp.GetService<ILogger<EventFeed.EventFeed>>()
                     );
+
+                    var realTimeNotificationListener = new RealTimeNotificationListener(
+                        uri: new Uri("http://localhost:5000/events/notification"),
+                        logger: sp.GetService<ILogger<RealTimeNotificationListener>>()
+                    );
                     
-                    return new EventFeedListener(feed);
+                    return new EventFeedListener(feed, realTimeNotificationListener);
                 }
             );
             services.AddSingleton<IEventDispatcher>(
