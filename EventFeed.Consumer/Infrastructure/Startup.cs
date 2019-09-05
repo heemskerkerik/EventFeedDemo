@@ -19,6 +19,7 @@ namespace EventFeed.Consumer.Infrastructure
 
             services.AddHttpClient();
             services.AddSingleton<IKnownEventStorage, IsolatedStorageKnownEventStorage>();
+            services.AddSingleton<ICachedClickStorage, IsolatedStorageCachedClickStorage>();
             services.AddSingleton<IHostedService>(
                 sp =>
                 {

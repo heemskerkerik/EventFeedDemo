@@ -5,15 +5,23 @@ namespace EventFeed.Consumer.Events
 {
     internal class ClickedEventHandler: IEventHandler<ClickedEvent>
     {
+        private readonly ICachedClickStorage _storage;
         private readonly ILogger<ClickedEventHandler> _logger;
 
         public void HandleEvent(ClickedEvent @event)
         {
-            _logger.LogInformation("Noticed a click!");
+            int oldClickCount = _storage.GetClickCount();
+            _storage.StoreClickCount(oldClickCount + 1);
+
+            _logger.LogInformation("Noticed a click! Click count is now {ClickCount}", oldClickCount + 1);
         }
 
-        public ClickedEventHandler(ILogger<ClickedEventHandler> logger)
+        public ClickedEventHandler(
+            ICachedClickStorage storage,
+            ILogger<ClickedEventHandler> logger
+        )
         {
+            _storage = storage;
             _logger = logger;
         }
     }
