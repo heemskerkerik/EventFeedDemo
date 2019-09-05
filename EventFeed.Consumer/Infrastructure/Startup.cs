@@ -17,6 +17,7 @@ namespace EventFeed.Consumer.Infrastructure
         {
             var settings = _configuration.Get<Settings>();
 
+            services.AddMvc();
             services.AddHttpClient();
             services.AddSingleton<IKnownEventStorage, IsolatedStorageKnownEventStorage>();
             services.AddSingleton<ICachedClickStorage, IsolatedStorageCachedClickStorage>();
@@ -49,6 +50,7 @@ namespace EventFeed.Consumer.Infrastructure
 
         public void Configure(IApplicationBuilder app)
         {
+            app.UseMvc();
         }
 
         public Startup(IConfiguration configuration)

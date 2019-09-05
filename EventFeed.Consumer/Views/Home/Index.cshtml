@@ -1,0 +1,20 @@
+@model EventFeed.Consumer.Models.HomeModel
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>Event Feed Demo - Consumer</title>
+</head>
+<body>
+<div>
+    <h2>Number of clicks: @Model.ClickCount</h2>
+    
+    <button onclick="location.reload();">Refresh</button>
+</div>
+</body>
+</html>
