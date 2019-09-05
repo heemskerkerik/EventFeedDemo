@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using EventFeed.Consumer.EventFeed;
 using EventFeed.Consumer.Events;
+using EventFeed.Consumer.Hubs;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,6 +19,8 @@ namespace EventFeed.Consumer.Infrastructure
             var settings = _configuration.Get<Settings>();
 
             services.AddMvc();
+            services.AddSignalR();
+            
             services.AddHttpClient();
             services.AddSingleton<IKnownEventStorage, IsolatedStorageKnownEventStorage>();
             services.AddSingleton<ICachedClickStorage, IsolatedStorageCachedClickStorage>();
@@ -50,7 +53,9 @@ namespace EventFeed.Consumer.Infrastructure
 
         public void Configure(IApplicationBuilder app)
         {
+            app.UseSignalR(routes => routes.MapHub<ClicksHub>("/realtime/clicks"));
             app.UseMvc();
+            app.UseStaticFiles();
         }
 
         public Startup(IConfiguration configuration)

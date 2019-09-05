@@ -12,9 +12,12 @@
 </head>
 <body>
 <div>
-    <h2>Number of clicks: @Model.ClickCount</h2>
+    <h2>Number of clicks: <span id="clicks">@Model.ClickCount</span></h2>
     
     <button onclick="location.reload();">Refresh</button>
 </div>
+
+<script src="~/lib/signalr/signalr.js?v=@DateTime.UtcNow.Ticks"></script>
+<script src="~/lib/app.js?v=@DateTime.UtcNow.Ticks"></script>
 </body>
 </html>

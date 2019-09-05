@@ -10,4 +10,8 @@
     <PackageReference Include="Microsoft.SyndicationFeed.ReaderWriter" Version="1.0.2" />
     <PackageReference Include="System.Reactive" Version="4.1.6" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\lib\signalr" />
+  </ItemGroup>
 </Project>
