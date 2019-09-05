@@ -13,6 +13,7 @@ async function start() {
     try {
         await connection.start();
         console.log("connected");
+        connection.invoke("Refresh").catch(err => console.error(err.toString()));
     } catch (err) {
         console.log(err);
         setTimeout(() => start(), 5000);
