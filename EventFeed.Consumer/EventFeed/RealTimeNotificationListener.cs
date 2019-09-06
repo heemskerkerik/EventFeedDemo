@@ -55,6 +55,8 @@ namespace EventFeed.Consumer.EventFeed
 
         public async Task StopAsync(CancellationToken cancellationToken)
         {
+            _stoppingTokenSource.Cancel();
+            
             await _connection.StopAsync(cancellationToken);
             await _connectTask;
         }
@@ -84,7 +86,7 @@ namespace EventFeed.Consumer.EventFeed
         private readonly Subject<string> _eventNotificationSubject = new Subject<string>();
         private HubConnection _connection;
         private Task _connectTask;
-        private IAsyncPolicy _connectPolicy;
+        private readonly IAsyncPolicy _connectPolicy;
         private readonly CancellationTokenSource _stoppingTokenSource = new CancellationTokenSource();
     }
 }
