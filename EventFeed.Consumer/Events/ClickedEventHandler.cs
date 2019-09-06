@@ -16,11 +16,12 @@ namespace EventFeed.Consumer.Events
         {
             int oldClickCount = _storage.GetClickCount();
             int newClickCount = oldClickCount + 1;
-            _storage.StoreClickCount(newClickCount);
-
             _logger.LogInformation("Noticed a click! Click count is now {ClickCount}", newClickCount);
-
+            
+            _storage.StoreClickCount(newClickCount);
             Task.Run(() => _hubContext.Clients.All.SendAsync("Click", newClickCount)).GetAwaiter().GetResult();
+
+            _logger.LogDebug("Stored and broadcast click count {ClickCount} to SignalR clients", newClickCount);
         }
 
         public ClickedEventHandler(

@@ -11,6 +11,8 @@ namespace EventFeed.Consumer.Infrastructure
     {
         public void Dispatch(Event @event, Action markEventAsProcessed)
         {
+            _logger.LogDebug("Dispatching event {Id}", @event.Id);
+            
             var deserializedEvent = Deserialize();
 
             if (deserializedEvent == null)

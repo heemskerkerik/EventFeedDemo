@@ -33,6 +33,13 @@ namespace EventFeed.Consumer.EventFeed
                 if (!newEntries.Any())
                     return;
 
+                _logger.LogDebug(
+                    "Found {Count} new entries in {Uri}, starting with {Id}",
+                    newEntries.Count,
+                    _uri,
+                    newEntries.First().Id
+                );
+
                 DispatchEvents(newEntries);
             }
 
