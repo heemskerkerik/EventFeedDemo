@@ -56,7 +56,10 @@ namespace EventFeed.Consumer.EventFeed
         public async Task StopAsync(CancellationToken cancellationToken)
         {
             _stoppingTokenSource.Cancel();
-            
+
+            if (_connection == null || _connectTask == null)
+                return;
+
             await _connection.StopAsync(cancellationToken);
             await _connectTask;
         }
