@@ -18,7 +18,7 @@ async function start() {
         console.log(err);
         setTimeout(() => start(), 5000);
     }
-};
+}
 
 connection.onclose(async () => {
     console.log("lost connection");
