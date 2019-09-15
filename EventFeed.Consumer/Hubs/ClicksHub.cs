@@ -11,8 +11,8 @@ namespace EventFeed.Consumer.Hubs
         {
             int clickCount = _storage.GetClickCount();
             await Clients.Caller.SendAsync("Click", clickCount);
-            
-            _logger.LogDebug("Broadcast click count {ClickCount} to SignalR clients", clickCount);
+
+            _logger.LogDebug("Refreshed client {ClientId} with click count {ClickCount}", Context.ConnectionId, clickCount);
         }
 
         public ClicksHub(ICachedClickStorage storage, ILogger<ClicksHub> logger)
