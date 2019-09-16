@@ -22,6 +22,7 @@ namespace EventFeed.Consumer.Infrastructure
             {
                 await WebHost.CreateDefaultBuilder<Startup>(args)
                              .UseSerilog(logger)
+                             .UseUrls("http://localhost:5001")
                              .Build()
                              .RunAsync();
             }
