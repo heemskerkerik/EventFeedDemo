@@ -19,7 +19,7 @@ namespace EventFeed.Consumer.EventFeed
                          .Build();
 
             _connection.On<string>("Notify", OnNotification);
-            _connection.Closed += async error => { await OnConnectionClosed(error); };
+            _connection.Closed += OnConnectionClosed;
 
             _connectTask = OpenConnectionAsync();
             
