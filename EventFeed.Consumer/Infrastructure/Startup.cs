@@ -35,7 +35,7 @@ namespace EventFeed.Consumer.Infrastructure
                         logger: sp.GetService<ILogger<EventFeed.EventFeed>>()
                     );
 
-                    bool enableRealTimeNotifications = _configuration.GetValue("EnableRealTimeNotifications", defaultValue: true);
+                    bool enableRealTimeNotifications = settings.EnableRealTimeNotifications;
 
                     RealTimeNotificationListener realTimeNotificationListener;
 
