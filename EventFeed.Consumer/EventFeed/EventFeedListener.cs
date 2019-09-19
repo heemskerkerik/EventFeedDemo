@@ -11,12 +11,18 @@ namespace EventFeed.Consumer.EventFeed
     {
         public Task StartAsync(CancellationToken cancellationToken)
         {
+            var realTimeEventNotification = _realTimeNotificationListener?.EventNotification
+                                         ?? Observable.Never<string>();
+
             _subscription = Observable.Interval(TimeSpan.FromSeconds(5))
                                       .Select(_ => (string) null)
-                                      .Merge(_realTimeNotificationListener.EventNotification)
+                                      .Merge(realTimeEventNotification)
                                       .SubscribeOn(NewThreadScheduler.Default)
                                       .Subscribe(PollForChanges);
-            return _realTimeNotificationListener.StartAsync();
+
+            return _realTimeNotificationListener != null
+                       ? _realTimeNotificationListener.StartAsync()
+                       : Task.CompletedTask;
         }
 
         private void PollForChanges(string id)

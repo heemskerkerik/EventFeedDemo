@@ -35,18 +35,27 @@ namespace EventFeed.Consumer.Infrastructure
                         logger: sp.GetService<ILogger<EventFeed.EventFeed>>()
                     );
 
-                    var realTimeNotificationDiscoverer = new RealTimeNotificationDiscoverer(
-                        uri: settings.ProducerEventFeedUri,
-                        httpClientFactory: sp.GetRequiredService<IHttpClientFactory>().CreateClient,
-                        logger: sp.GetService<ILogger<RealTimeNotificationDiscoverer>>()
-                    );
+                    bool enableRealTimeNotifications = _configuration.GetValue("EnableRealTimeNotifications", defaultValue: true);
 
-                    var realTimeNotificationListener = new RealTimeNotificationListener(
-                        uri: settings.ProducerEventFeedUri,
-                        discoverer: realTimeNotificationDiscoverer,
-                        logger: sp.GetService<ILogger<RealTimeNotificationListener>>()
-                    );
-                    
+                    RealTimeNotificationListener realTimeNotificationListener;
+
+                    if (enableRealTimeNotifications)
+                    {
+                        var realTimeNotificationDiscoverer = new RealTimeNotificationDiscoverer(
+                            uri: settings.ProducerEventFeedUri,
+                            httpClientFactory: sp.GetRequiredService<IHttpClientFactory>().CreateClient,
+                            logger: sp.GetService<ILogger<RealTimeNotificationDiscoverer>>()
+                        );
+
+                        realTimeNotificationListener = new RealTimeNotificationListener(
+                            uri: settings.ProducerEventFeedUri,
+                            discoverer: realTimeNotificationDiscoverer,
+                            logger: sp.GetService<ILogger<RealTimeNotificationListener>>()
+                        );
+                    }
+                    else
+                        realTimeNotificationListener = null;
+
                     return new EventFeedListener(feed, realTimeNotificationListener);
                 }
             );
