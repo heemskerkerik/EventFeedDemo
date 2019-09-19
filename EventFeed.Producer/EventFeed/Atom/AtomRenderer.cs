@@ -63,12 +63,13 @@ namespace EventFeed.Producer.EventFeed.Atom
                         );
                 }
 
-                await _writer.Write(
-                    new SyndicationLink(
-                        _uriProvider.GetNotificationsUri(),
-                        "notifications"
-                    )
-                );
+                if (_uriProvider.GetNotificationsUri() != null)
+                    await _writer.Write(
+                        new SyndicationLink(
+                            _uriProvider.GetNotificationsUri(),
+                            "notifications"
+                        )
+                    );
             }
 
             async Task WriteEventAsync(Event @event)

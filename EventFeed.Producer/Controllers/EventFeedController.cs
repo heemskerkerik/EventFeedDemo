@@ -7,6 +7,7 @@ using EventFeed.Producer.EventFeed.Atom;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 
 namespace EventFeed.Producer.Controllers
@@ -85,15 +86,22 @@ namespace EventFeed.Producer.Controllers
         [NonAction]
         public Uri GetNotificationsUri()
         {
-            return new Uri(new Uri(Request.GetEncodedUrl()), Url.Content("~/events/notification"));
+            return _settings.Value.EnableSignalR
+                       ? new Uri(new Uri(Request.GetEncodedUrl()), Url.Content("~/events/notification"))
+                       : null;
         }
 
-        public EventFeedController(IReadEventStorage storage)
+        public EventFeedController(
+            IReadEventStorage storage,
+            IOptions<Settings> settings
+        )
         {
             _storage = storage;
+            _settings = settings;
         }
 
         private readonly IReadEventStorage _storage;
+        private readonly IOptions<Settings> _settings;
 
         private const string AtomContentType = "application/atom+xml";
         private static readonly MediaTypeHeaderValue _atomMediaType = new MediaTypeHeaderValue(AtomContentType);
