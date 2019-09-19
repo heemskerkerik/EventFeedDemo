@@ -56,7 +56,11 @@ namespace EventFeed.Consumer.Infrastructure
                     else
                         realTimeNotificationListener = null;
 
-                    return new EventFeedListener(feed, realTimeNotificationListener);
+                    return new EventFeedListener(
+                        feed,
+                        realTimeNotificationListener,
+                        pollingInterval: TimeSpan.FromSeconds(settings.PollingIntervalSeconds)
+                    );
                 }
             );
             services.AddSingleton<IEventDispatcher>(
