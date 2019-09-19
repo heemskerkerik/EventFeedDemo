@@ -10,13 +10,13 @@ using Microsoft.Extensions.Logging;
 
 namespace EventFeed.Producer.Infrastructure
 {
-    public class EventNotificationMultiplexer: IHostedService
+    public class EventNotificationBroadcaster: IHostedService
     {
         public Task StartAsync(CancellationToken cancellationToken)
         {
             _subscription = _notifySubject
                            .Select(id => "urn:uuid:" + id)
-                           .Do(id => _logger.LogDebug("Multiplexing notification for event {Id}", id))
+                           .Do(id => _logger.LogDebug("Broadcasting notification for event {Id}", id))
                            .SelectMany(
                                 async id =>
                                 {
@@ -39,10 +39,10 @@ namespace EventFeed.Producer.Infrastructure
             return Task.CompletedTask;
         }
 
-        public EventNotificationMultiplexer(
+        public EventNotificationBroadcaster(
             Subject<string> notifySubject,
             IHubContext<EventNotificationHub> hubContext,
-            ILogger<EventNotificationMultiplexer> logger
+            ILogger<EventNotificationBroadcaster> logger
         )
         {
             _notifySubject = notifySubject;
@@ -52,7 +52,7 @@ namespace EventFeed.Producer.Infrastructure
 
         private readonly Subject<string> _notifySubject;
         private readonly IHubContext<EventNotificationHub> _hubContext;
-        private readonly ILogger<EventNotificationMultiplexer> _logger;
+        private readonly ILogger<EventNotificationBroadcaster> _logger;
         private IDisposable _subscription;
     }
 }

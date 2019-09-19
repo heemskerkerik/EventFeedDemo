@@ -17,7 +17,7 @@ namespace EventFeed.Producer.Infrastructure
             services.AddSingleton<IClickStorage, IsolatedStorageClickStorage>();
             services.AddSingleton<IWriteEventStorage, IsolatedStorageEventStorage>();
             services.AddSingleton(sp => (IReadEventStorage) sp.GetService<IWriteEventStorage>());
-            services.AddHostedService<EventNotificationMultiplexer>();
+            services.AddHostedService<EventNotificationBroadcaster>();
             services.AddSingleton<Subject<string>>();
         }
 
