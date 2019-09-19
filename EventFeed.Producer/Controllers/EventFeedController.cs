@@ -1,9 +1,11 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using EventFeed.Producer.EventFeed;
 using EventFeed.Producer.EventFeed.Atom;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
 
@@ -22,8 +24,11 @@ namespace EventFeed.Producer.Controllers
             return await RenderFeedAsync(page);
         }
 
-        private bool ClientAcceptsAtomResponse() =>
-            Request.GetTypedHeaders().Accept?.Contains(_atomMediaType) ?? true;
+        private bool ClientAcceptsAtomResponse()
+        {
+            var acceptHeader = Request.GetTypedHeaders().Accept;
+            return acceptHeader?.Any(h => _atomMediaType.IsSubsetOf(h)) ?? true;
+        }
 
         private async Task<IActionResult> RenderFeedAsync(EventFeedPage page)
         {
@@ -76,6 +81,12 @@ namespace EventFeed.Producer.Controllers
                     protocol: Request.Scheme
                 )
             );
+
+        [NonAction]
+        public Uri GetNotificationsUri()
+        {
+            return new Uri(new Uri(Request.GetEncodedUrl()), Url.Content("~/events/notification"));
+        }
 
         public EventFeedController(IReadEventStorage storage)
         {
