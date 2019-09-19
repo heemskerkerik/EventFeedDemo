@@ -44,6 +44,7 @@ namespace EventFeed.Producer.EventFeed.Atom
                         )
                     );
                 if (_page.NextPageId != null)
+                {
                     await _writer.Write(
                         new SyndicationLink(
                             _page.NextPageId != _latestEventPageId
@@ -52,6 +53,22 @@ namespace EventFeed.Producer.EventFeed.Atom
                             "next-archive"
                         )
                     );
+
+                    if (_page.NextPageId != _latestEventPageId)
+                        await _writer.Write(
+                            new SyndicationLink(
+                                _uriProvider.GetLatestEventsUri(),
+                                "current"
+                            )
+                        );
+                }
+
+                await _writer.Write(
+                    new SyndicationLink(
+                        _uriProvider.GetNotificationsUri(),
+                        "notifications"
+                    )
+                );
             }
 
             async Task WriteEventAsync(Event @event)

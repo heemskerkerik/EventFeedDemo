@@ -29,14 +29,21 @@ namespace EventFeed.Consumer.Infrastructure
                 {
                     var feed = new EventFeed.EventFeed(
                         uri: settings.ProducerEventFeedUri,
-                        httpClientFactory: () => sp.GetRequiredService<IHttpClientFactory>().CreateClient(),
+                        httpClientFactory: sp.GetRequiredService<IHttpClientFactory>().CreateClient,
                         knownEventStorage: sp.GetRequiredService<IKnownEventStorage>(),
                         dispatcher: sp.GetRequiredService<IEventDispatcher>(),
                         logger: sp.GetService<ILogger<EventFeed.EventFeed>>()
                     );
 
+                    var realTimeNotificationDiscoverer = new RealTimeNotificationDiscoverer(
+                        uri: settings.ProducerEventFeedUri,
+                        httpClientFactory: sp.GetRequiredService<IHttpClientFactory>().CreateClient,
+                        logger: sp.GetService<ILogger<RealTimeNotificationDiscoverer>>()
+                    );
+
                     var realTimeNotificationListener = new RealTimeNotificationListener(
-                        uri: new Uri("http://localhost:5000/events/notification"),
+                        uri: settings.ProducerEventFeedUri,
+                        discoverer: realTimeNotificationDiscoverer,
                         logger: sp.GetService<ILogger<RealTimeNotificationListener>>()
                     );
                     

@@ -14,16 +14,36 @@ namespace EventFeed.Consumer.EventFeed
 
         public Task StartAsync()
         {
+            _connectTask = StartInBackgroundAsync();
+            return Task.CompletedTask;
+        }
+
+        private async Task StartInBackgroundAsync()
+        {
+            _notificationsUri = await DiscoverNotificationUriAsync();
+
+            if (_notificationsUri == null)
+            {
+                _logger.LogInformation(
+                    "Event feed at {Uri} does not expose real-time notifications.",
+                    _uri
+                );
+                return;
+            }
+
             _connection = new HubConnectionBuilder()
-                         .WithUrl(_uri)
+                         .WithUrl(_notificationsUri)
                          .Build();
 
             _connection.On<string>("Notify", OnNotification);
             _connection.Closed += OnConnectionClosed;
 
-            _connectTask = OpenConnectionAsync();
-            
-            return Task.CompletedTask;
+            await OpenConnectionAsync();
+
+            Task<Uri> DiscoverNotificationUriAsync()
+            {
+                return _discoverer.DiscoverNotificationUriAsync(_stoppingTokenSource.Token);
+            }
             
             void OnNotification(string id)
             {
@@ -33,7 +53,7 @@ namespace EventFeed.Consumer.EventFeed
 
             Task OnConnectionClosed(Exception error)
             {
-                _logger.LogWarning(error, "Lost connection to {Uri}", _uri);
+                _logger.LogWarning(error, "Lost connection to {Uri}", _notificationsUri);
                 _connectTask = OpenConnectionAsync();
                 return Task.CompletedTask;
             }
@@ -49,7 +69,7 @@ namespace EventFeed.Consumer.EventFeed
             async Task ConnectAsync(CancellationToken cancellation)
             {
                 await _connection.StartAsync(cancellation);
-                _logger.LogInformation("Connected to {Uri}", _uri);
+                _logger.LogInformation("Connected to {Uri}", _notificationsUri);
             }
         }
 
@@ -66,10 +86,12 @@ namespace EventFeed.Consumer.EventFeed
 
         public RealTimeNotificationListener(
             Uri uri,
+            RealTimeNotificationDiscoverer discoverer,
             ILogger<RealTimeNotificationListener> logger
         )
         {
             _uri = uri;
+            _discoverer = discoverer;
             _logger = logger;
 
             _connectPolicy = Policy.Handle<Exception>()
@@ -78,17 +100,19 @@ namespace EventFeed.Consumer.EventFeed
                                         (ex, sleep) => _logger.LogDebug(
                                             ex,
                                             "Failed to connect to {Uri}; will retry in {SleepTimeMs} ms.",
-                                            _uri,
+                                            _notificationsUri,
                                             sleep.TotalMilliseconds
                                         )
                                     );
         }
 
         private readonly Uri _uri;
+        private readonly RealTimeNotificationDiscoverer _discoverer;
         private readonly ILogger<RealTimeNotificationListener> _logger;
         private readonly Subject<string> _eventNotificationSubject = new Subject<string>();
         private HubConnection _connection;
         private Task _connectTask;
+        private Uri _notificationsUri;
         private readonly IAsyncPolicy _connectPolicy;
         private readonly CancellationTokenSource _stoppingTokenSource = new CancellationTokenSource();
     }

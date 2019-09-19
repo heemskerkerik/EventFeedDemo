@@ -16,7 +16,7 @@ namespace EventFeed.Consumer.EventFeed.Atom
             {
                 var feedReader = new AtomFeedReader(xmlReader);
                 var entries = new List<AtomEntry>();
-                Uri nextPageUri = null, previousPageUri = null;
+                Uri nextPageUri = null, previousPageUri = null, realTimeNotificationUri = null;
 
                 while (await feedReader.Read())
                 {
@@ -45,6 +45,9 @@ namespace EventFeed.Consumer.EventFeed.Atom
                                 case "prev-archive" when previousPageUri == null:
                                     previousPageUri = link.Uri;
                                     break;
+                                case "notifications" when realTimeNotificationUri == null:
+                                    realTimeNotificationUri = link.Uri;
+                                    break;
                             }
 
                             break;
@@ -54,6 +57,7 @@ namespace EventFeed.Consumer.EventFeed.Atom
                 return new AtomPage(
                     nextArchivePageUri: nextPageUri,
                     previousArchivePageUri: previousPageUri,
+                    realTimeNotificationUri: realTimeNotificationUri,
                     entries: entries
                 );
             }
