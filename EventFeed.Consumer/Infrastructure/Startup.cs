@@ -37,7 +37,7 @@ namespace EventFeed.Consumer.Infrastructure
 
                     bool enableRealTimeNotifications = settings.EnableRealTimeNotifications;
 
-                    RealTimeNotificationListener realTimeNotificationListener;
+                    RealTimeNotificationListener? realTimeNotificationListener;
 
                     if (enableRealTimeNotifications)
                     {
@@ -78,9 +78,16 @@ namespace EventFeed.Consumer.Infrastructure
 
         public void Configure(IApplicationBuilder app)
         {
-            app.UseSignalR(routes => routes.MapHub<ClicksHub>("/realtime/clicks"));
-            app.UseMvc();
             app.UseStaticFiles();
+            app.UseRouting();
+            
+            app.UseEndpoints(
+                r =>
+                {
+                    r.MapControllers();
+                    r.MapHub<ClicksHub>("/realtime/clicks");
+                }
+            );
         }
 
         public Startup(IConfiguration configuration)

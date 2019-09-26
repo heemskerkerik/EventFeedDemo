@@ -37,7 +37,7 @@ namespace EventFeed.Consumer.Infrastructure
                 markEventAsProcessed();
             }
             
-            object Deserialize()
+            object? Deserialize()
             {
                 var type = GetEventType();
 
@@ -49,8 +49,9 @@ namespace EventFeed.Consumer.Infrastructure
             
             Type GetEventType()
             {
-                _contentTypeMapping.TryGetValue(@event.Type, out var type);
-                return type;
+                if (!_contentTypeMapping.TryGetValue(@event.Type, out var type))
+                    throw new Exception($"Cannot find type for content type '{@event.Type}'.");
+                return type!;
             }
 
             Type GetHandlerType()

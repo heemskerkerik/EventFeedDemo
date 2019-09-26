@@ -6,17 +6,15 @@ namespace EventFeed.Consumer.Infrastructure
 {
     internal class IsolatedStorageKnownEventStorage: IKnownEventStorage
     {
-        public string GetLastKnownEventId()
+        public string? GetLastKnownEventId()
         {
             lock (this)
             {
                 if (!_storage.FileExists(FileName))
                     return null;
 
-                using (var reader = new StreamReader(_storage.OpenFile(FileName, FileMode.Open, FileAccess.Read)))
-                {
-                    return reader.ReadToEnd();
-                }
+                using var reader = new StreamReader(_storage.OpenFile(FileName, FileMode.Open, FileAccess.Read));
+                return reader.ReadToEnd();
             }
         }
 
@@ -24,10 +22,8 @@ namespace EventFeed.Consumer.Infrastructure
         {
             lock (this)
             {
-                using (var writer = new StreamWriter(_storage.OpenFile(FileName, FileMode.Create, FileAccess.Write)))
-                {
-                    writer.Write(id);
-                }
+                using var writer = new StreamWriter(_storage.OpenFile(FileName, FileMode.Create, FileAccess.Write));
+                writer.Write(id);
             }
         }
         

@@ -8,10 +8,10 @@ namespace EventFeed.Consumer.EventFeed.Atom
 {
     internal class AtomFeedNavigator
     {
-        public async Task<IReadOnlyCollection<AtomEntry>> GetEntriesSinceAsync(string entryId)
+        public async Task<IReadOnlyCollection<AtomEntry>> GetEntriesSinceAsync(string? entryId)
         {
             var entries = new List<AtomEntry>();
-            Uri currentUri = _initialUri;
+            Uri? currentUri = _initialUri;
 
             do
             {

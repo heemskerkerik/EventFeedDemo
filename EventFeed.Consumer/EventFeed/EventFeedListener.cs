@@ -15,7 +15,7 @@ namespace EventFeed.Consumer.EventFeed
                                          ?? Observable.Never<string>();
 
             _subscription = Observable.Interval(_pollingInterval)
-                                      .Select(_ => (string) null)
+                                      .Select(_ => (string?) null)
                                       .Merge(realTimeEventNotification)
                                       .SubscribeOn(NewThreadScheduler.Default)
                                       .Subscribe(PollForChanges);
@@ -25,20 +25,21 @@ namespace EventFeed.Consumer.EventFeed
                        : Task.CompletedTask;
         }
 
-        private void PollForChanges(string id)
+        private void PollForChanges(string? id)
         {
             Task.Run(() => _eventFeed.PollForChangesAsync()).GetAwaiter().GetResult();
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            _subscription.Dispose();
-            return _realTimeNotificationListener.StopAsync(cancellationToken);
+            _subscription?.Dispose();
+            return _realTimeNotificationListener?.StopAsync(cancellationToken)
+                ?? Task.CompletedTask;
         }
 
         public EventFeedListener(
             EventFeed eventFeed,
-            RealTimeNotificationListener realTimeNotificationListener,
+            RealTimeNotificationListener? realTimeNotificationListener,
             TimeSpan pollingInterval
         )
         {
@@ -48,8 +49,8 @@ namespace EventFeed.Consumer.EventFeed
         }
 
         private readonly EventFeed _eventFeed;
-        private readonly RealTimeNotificationListener _realTimeNotificationListener;
+        private readonly RealTimeNotificationListener? _realTimeNotificationListener;
         private readonly TimeSpan _pollingInterval;
-        private IDisposable _subscription;
+        private IDisposable? _subscription;
     }
 }

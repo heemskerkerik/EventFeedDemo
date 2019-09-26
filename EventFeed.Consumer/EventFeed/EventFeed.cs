@@ -45,7 +45,7 @@ namespace EventFeed.Consumer.EventFeed
 
             async Task<IReadOnlyCollection<AtomEntry>> GetNewEntriesAsync()
             {
-                string lastKnownEventId = _knownEventStorage.GetLastKnownEventId();
+                string? lastKnownEventId = _knownEventStorage.GetLastKnownEventId();
 
                 return await _navigator.GetEntriesSinceAsync(lastKnownEventId);
             }

@@ -2,7 +2,7 @@ namespace EventFeed.Consumer.EventFeed
 {
     public interface IKnownEventStorage
     {
-        string GetLastKnownEventId();
+        string? GetLastKnownEventId();
         void StoreLastKnownEventId(string id);
     }
 }

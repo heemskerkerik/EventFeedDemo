@@ -34,13 +34,14 @@ namespace EventFeed.Consumer.EventFeed
             _connection = new HubConnectionBuilder()
                          .WithUrl(_notificationsUri)
                          .Build();
+            HubConnection connection = _connection;
 
-            _connection.On<string>("Notify", OnNotification);
-            _connection.Closed += OnConnectionClosed;
+            connection.On<string>("Notify", OnNotification);
+            connection.Closed += OnConnectionClosed;
 
             await OpenConnectionAsync();
 
-            Task<Uri> DiscoverNotificationUriAsync()
+            Task<Uri?> DiscoverNotificationUriAsync()
             {
                 return _discoverer.DiscoverNotificationUriAsync(_stoppingTokenSource.Token);
             }
@@ -68,7 +69,7 @@ namespace EventFeed.Consumer.EventFeed
 
             async Task ConnectAsync(CancellationToken cancellation)
             {
-                await _connection.StartAsync(cancellation);
+                await connection.StartAsync(cancellation);
                 _logger.LogInformation("Connected to {Uri}", _notificationsUri);
             }
         }
@@ -110,9 +111,9 @@ namespace EventFeed.Consumer.EventFeed
         private readonly RealTimeNotificationDiscoverer _discoverer;
         private readonly ILogger<RealTimeNotificationListener> _logger;
         private readonly Subject<string> _eventNotificationSubject = new Subject<string>();
-        private HubConnection _connection;
-        private Task _connectTask;
-        private Uri _notificationsUri;
+        private HubConnection? _connection;
+        private Task? _connectTask;
+        private Uri? _notificationsUri;
         private readonly IAsyncPolicy _connectPolicy;
         private readonly CancellationTokenSource _stoppingTokenSource = new CancellationTokenSource();
     }
