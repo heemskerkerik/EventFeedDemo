@@ -6,6 +6,6 @@ namespace EventFeed.Producer.EventFeed.Atom
     {
         Uri GetLatestEventsUri();
         Uri GetArchivedPageUri(string pageId);
-        Uri GetNotificationsUri();
+        Uri? GetNotificationsUri();
     }
 }

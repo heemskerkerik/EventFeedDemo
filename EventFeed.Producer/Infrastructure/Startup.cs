@@ -27,12 +27,18 @@ namespace EventFeed.Producer.Infrastructure
         {
             bool enableSignalR = _configuration.GetValue("EnableSignalR", defaultValue: true);
 
-            if (enableSignalR)
-                app.UseSignalR(routes => routes.MapHub<EventNotificationHub>("/events/notification"));
-            else
-                _logger.LogWarning("Real-time notifications of events have been disabled by configuration");
+            app.UseRouting();
+            app.UseEndpoints(
+                r =>
+                {
+                    if (enableSignalR)
+                        r.MapHub<EventNotificationHub>("/events/notification");
+                    else
+                        _logger.LogWarning("Real-time notifications of events have been disabled by configuration");
 
-            app.UseMvc();
+                    r.MapControllers();
+                }
+            );
         }
 
         public Startup(IConfiguration configuration, ILogger<Startup> logger)

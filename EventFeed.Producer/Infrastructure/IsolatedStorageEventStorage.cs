@@ -61,11 +61,11 @@ namespace EventFeed.Producer.Infrastructure
 
             string GetEventType()
             {
-                switch (@event.GetType())
+                return @event switch
                 {
-                    case Type t when t == typeof(ClickedEvent): return "application/vnd.eventfeeddemo.clicked+json";
-                    default: throw new ArgumentException($"Unrecognized event type '{@event.GetType()}'");                        
-                }
+                    ClickedEvent _ => "application/vnd.eventfeeddemo.clicked+json",
+                    _ => throw new ArgumentException($"Unrecognized event type '{@event.GetType()}'"),
+                };
             }
 
             string SerializeEvent() => JsonConvert.SerializeObject(@event);
@@ -79,16 +79,14 @@ namespace EventFeed.Producer.Infrastructure
 
                 string json = JsonConvert.SerializeObject(newPages);
 
-                using (var writer = new StreamWriter(
+                using var writer = new StreamWriter(
                     _storage.OpenFile(
                         PageListFileName,
                         FileMode.Create,
                         FileAccess.Write
                     )
-                ))
-                {
-                    writer.Write(json);
-                }
+                );
+                writer.Write(json);
             }
 
             void AppendEvent(string pageId, EventEnvelope eventEnvelope)
@@ -103,17 +101,15 @@ namespace EventFeed.Producer.Infrastructure
             {
                 string fileName = GetPageFileName(pageId);
 
-                using (var writer = new StreamWriter(
+                using var writer = new StreamWriter(
                     _storage.OpenFile(
                         fileName,
                         FileMode.Create,
                         FileAccess.Write
                     )
-                ))
-                {
-                    string json = JsonConvert.SerializeObject(events);
-                    writer.Write(json);
-                }
+                );
+                string json = JsonConvert.SerializeObject(events);
+                writer.Write(json);
             }
         }
         
@@ -127,17 +123,15 @@ namespace EventFeed.Producer.Infrastructure
             if (!_storage.FileExists(PageListFileName))
                 return ImmutableList<string>.Empty;
 
-            using (var reader = new StreamReader(
+            using var reader = new StreamReader(
                 _storage.OpenFile(
                     PageListFileName,
                     FileMode.Open,
                     FileAccess.Read
                 )
-            ))
-            {
-                string json = reader.ReadToEnd();
-                return JsonConvert.DeserializeObject<ImmutableList<string>>(json);
-            }
+            );
+            string json = reader.ReadToEnd();
+            return JsonConvert.DeserializeObject<ImmutableList<string>>(json);
         }
 
         private string GetCurrentPageId()
@@ -155,17 +149,15 @@ namespace EventFeed.Producer.Infrastructure
             if (!_storage.FileExists(fileName))
                 return ImmutableList<EventEnvelope>.Empty;
 
-            using (var reader = new StreamReader(
+            using var reader = new StreamReader(
                 _storage.OpenFile(
                     fileName,
                     FileMode.Open,
                     FileAccess.Read
                 )
-            ))
-            {
-                string json = reader.ReadToEnd();
-                return JsonConvert.DeserializeObject<EventEnvelope[]>(json).ToImmutableList();
-            }
+            );
+            string json = reader.ReadToEnd();
+            return JsonConvert.DeserializeObject<EventEnvelope[]>(json).ToImmutableList();
         }
 
         private string GetPageFileName(string pageId) => PageFileNamePrefix + pageId + ".dat";
@@ -223,12 +215,12 @@ namespace EventFeed.Producer.Infrastructure
             if (index == -1)
                 throw new EventFeedPageNotFoundException();
 
-            string previousPageId = index > 0
-                                        ? allPages[index - 1]
-                                        : null;
-            string nextPageId = index < allPages.Count - 1
-                                    ? allPages[index + 1]
-                                    : null;
+            string? previousPageId = index > 0
+                                         ? allPages[index - 1]
+                                         : null;
+            string? nextPageId = index < allPages.Count - 1
+                                     ? allPages[index + 1]
+                                     : null;
             
             var events = ReadEventsFromPage(pageId).Select(ConvertEventEnvelopeToEvent).ToList();
 

@@ -35,7 +35,7 @@ namespace EventFeed.Producer.Infrastructure
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            _subscription.Dispose();
+            _subscription?.Dispose();
             return Task.CompletedTask;
         }
 
@@ -53,6 +53,6 @@ namespace EventFeed.Producer.Infrastructure
         private readonly Subject<string> _notifySubject;
         private readonly IHubContext<EventNotificationHub> _hubContext;
         private readonly ILogger<EventNotificationBroadcaster> _logger;
-        private IDisposable _subscription;
+        private IDisposable? _subscription;
     }
 }

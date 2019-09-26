@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reactive.Disposables;
@@ -25,11 +24,11 @@ namespace EventFeed.Producer.EventFeed.Atom
 
             async Task WriteMetadataAsync()
             {
-                await _writer.WriteId("urn:publicid:EventFeedDemo");
-                await _writer.WriteUpdated(_page.Events.Select(e => e.Occurred).DefaultIfEmpty(_epoch).Max());
-                await _writer.Write(
+                await _writer!.WriteId("urn:publicid:EventFeedDemo");
+                await _writer!.WriteUpdated(_page.Events.Select(e => e.Occurred).DefaultIfEmpty(_epoch).Max());
+                await _writer!.Write(
                     new SyndicationLink(
-                        _page.Id == _latestEventPageId
+                        _page.Id == _latestEventPageId || _page.Id == null
                             ? _uriProvider.GetLatestEventsUri()
                             : _uriProvider.GetArchivedPageUri(_page.Id),
                         AtomLinkTypes.Self
@@ -37,7 +36,7 @@ namespace EventFeed.Producer.EventFeed.Atom
                 );
 
                 if (_page.PreviousPageId != null)
-                    await _writer.Write(
+                    await _writer!.Write(
                         new SyndicationLink(
                             _uriProvider.GetArchivedPageUri(_page.PreviousPageId),
                             "prev-archive"
@@ -45,7 +44,7 @@ namespace EventFeed.Producer.EventFeed.Atom
                     );
                 if (_page.NextPageId != null)
                 {
-                    await _writer.Write(
+                    await _writer!.Write(
                         new SyndicationLink(
                             _page.NextPageId != _latestEventPageId
                                 ? _uriProvider.GetArchivedPageUri(_page.NextPageId)
@@ -55,7 +54,7 @@ namespace EventFeed.Producer.EventFeed.Atom
                     );
 
                     if (_page.NextPageId != _latestEventPageId)
-                        await _writer.Write(
+                        await _writer!.Write(
                             new SyndicationLink(
                                 _uriProvider.GetLatestEventsUri(),
                                 "current"
@@ -64,7 +63,7 @@ namespace EventFeed.Producer.EventFeed.Atom
                 }
 
                 if (_uriProvider.GetNotificationsUri() != null)
-                    await _writer.Write(
+                    await _writer!.Write(
                         new SyndicationLink(
                             _uriProvider.GetNotificationsUri(),
                             "notifications"
@@ -75,7 +74,7 @@ namespace EventFeed.Producer.EventFeed.Atom
             async Task WriteEventAsync(Event @event)
             {
                 var atomEntry = ConvertEventToAtomEntry(@event);
-                await _writer.Write(atomEntry);
+                await _writer!.Write(atomEntry);
             }
             
             AtomEntry ConvertEventToAtomEntry(Event @event)
@@ -119,8 +118,8 @@ namespace EventFeed.Producer.EventFeed.Atom
         private readonly EventFeedPage _page;
         private readonly IReadEventStorage _storage;
         private readonly IEventFeedUriProvider _uriProvider;
-        private AtomFeedWriter _writer;
-        private string _latestEventPageId;
+        private AtomFeedWriter? _writer;
+        private string? _latestEventPageId;
 
         private static readonly DateTimeOffset _epoch = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
         

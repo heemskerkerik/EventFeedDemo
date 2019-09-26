@@ -84,7 +84,7 @@ namespace EventFeed.Producer.Controllers
             );
 
         [NonAction]
-        public Uri GetNotificationsUri()
+        public Uri? GetNotificationsUri()
         {
             return _settings.Value.EnableSignalR
                        ? new Uri(new Uri(Request.GetEncodedUrl()), Url.Content("~/events/notification"))
