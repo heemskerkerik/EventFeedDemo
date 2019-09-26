@@ -5,6 +5,7 @@ using EventFeed.Producer.Hubs;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace EventFeed.Producer.Infrastructure
 {
@@ -27,18 +28,20 @@ namespace EventFeed.Producer.Infrastructure
             bool enableSignalR = _configuration.GetValue("EnableSignalR", defaultValue: true);
 
             if (enableSignalR)
-            {
                 app.UseSignalR(routes => routes.MapHub<EventNotificationHub>("/events/notification"));
-            }
+            else
+                _logger.LogWarning("Real-time notifications of events have been disabled by configuration");
 
             app.UseMvc();
         }
 
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, ILogger<Startup> logger)
         {
             _configuration = configuration;
+            _logger = logger;
         }
 
         private readonly IConfiguration _configuration;
+        private readonly ILogger<Startup> _logger;
     }
 }
