@@ -28,10 +28,7 @@ namespace EventFeed.Producer.Infrastructure
             return Task.CompletedTask;
         }
 
-        private Task NotifyViaHubAsync(string id)
-        {
-            return _hubContext.Clients.All.SendAsync("Notify", id);
-        }
+        private Task NotifyViaHubAsync(string id) => _hubContext.Clients.All.SendAsync("Notify", id);
 
         public Task StopAsync(CancellationToken cancellationToken)
         {

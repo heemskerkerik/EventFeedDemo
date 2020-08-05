@@ -38,10 +38,8 @@ namespace EventFeed.Consumer.EventFeed.Atom
             var httpClient = _httpClientFactory();
             var reader = new AtomReader();
 
-            using (var stream = await httpClient.GetStreamAsync(uri))
-            {
-                return await reader.ReadAtomPage(stream);
-            }
+            await using var stream = await httpClient.GetStreamAsync(uri);
+            return await reader.ReadAtomPage(stream);
         }
 
         public AtomFeedNavigator(

@@ -25,10 +25,8 @@ namespace EventFeed.Consumer.EventFeed
                        : Task.CompletedTask;
         }
 
-        private void PollForChanges(string? id)
-        {
+        private void PollForChanges(string? id) =>
             Task.Run(() => _eventFeed.PollForChangesAsync()).GetAwaiter().GetResult();
-        }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {

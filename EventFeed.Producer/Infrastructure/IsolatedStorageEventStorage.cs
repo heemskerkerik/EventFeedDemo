@@ -59,14 +59,12 @@ namespace EventFeed.Producer.Infrastructure
                 );
             }
 
-            string GetEventType()
-            {
-                return @event switch
+            string GetEventType() =>
+                @event switch
                 {
                     ClickedEvent _ => "application/vnd.eventfeeddemo.clicked+json",
                     _ => throw new ArgumentException($"Unrecognized event type '{@event.GetType()}'"),
                 };
-            }
 
             string SerializeEvent() => JsonConvert.SerializeObject(@event);
 

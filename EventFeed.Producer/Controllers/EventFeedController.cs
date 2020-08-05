@@ -28,7 +28,9 @@ namespace EventFeed.Producer.Controllers
         private bool ClientAcceptsAtomResponse()
         {
             var acceptHeader = Request.GetTypedHeaders().Accept;
-            return acceptHeader?.Any(h => _atomMediaType.IsSubsetOf(h)) ?? true;
+            return acceptHeader == null
+                || !acceptHeader.Any()
+                || acceptHeader.Any(h => _atomMediaType.IsSubsetOf(h));
         }
 
         private async Task<IActionResult> RenderFeedAsync(EventFeedPage page)
@@ -65,7 +67,7 @@ namespace EventFeed.Producer.Controllers
         public Uri GetLatestEventsUri() =>
             new Uri(
                 Url.Action(
-                    action: "GetLatestEventsAsync",
+                    action: "GetLatestEvents",
                     controller: "EventFeed",
                     values: null,
                     protocol: Request.Scheme
@@ -76,7 +78,7 @@ namespace EventFeed.Producer.Controllers
         public Uri GetArchivedPageUri(string pageId) =>
             new Uri(
                 Url.Action(
-                    action: "GetArchivedEventsAsync",
+                    action: "GetArchivedEvents",
                     controller: "EventFeed",
                     values: new { pageId = pageId },
                     protocol: Request.Scheme
@@ -84,12 +86,10 @@ namespace EventFeed.Producer.Controllers
             );
 
         [NonAction]
-        public Uri? GetNotificationsUri()
-        {
-            return _settings.Value.EnableSignalR
-                       ? new Uri(new Uri(Request.GetEncodedUrl()), Url.Content("~/events/notification"))
-                       : null;
-        }
+        public Uri? GetNotificationsUri() =>
+            _settings.Value.EnableSignalR
+                ? new Uri(new Uri(Request.GetEncodedUrl()), Url.Content("~/events/notification"))
+                : null;
 
         public EventFeedController(
             IReadEventStorage storage,

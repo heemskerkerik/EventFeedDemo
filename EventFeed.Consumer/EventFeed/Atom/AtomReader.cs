@@ -13,45 +13,14 @@ namespace EventFeed.Consumer.EventFeed.Atom
         public async Task<AtomPage> ReadAtomPage(Stream stream)
         {
             using var xmlReader = XmlReader.Create(stream, new XmlReaderSettings { Async = true });
-            
+
             var feedReader = new AtomFeedReader(xmlReader);
             var entries = new List<AtomEntry>();
             Uri? nextPageUri = null, previousPageUri = null, realTimeNotificationUri = null;
 
             while (await feedReader.Read())
             {
-                switch (feedReader.ElementType)
-                {
-                    case SyndicationElementType.Item:
-                        var item = (Microsoft.SyndicationFeed.Atom.AtomEntry) await feedReader.ReadItem();
-
-                        var atomEntry = new AtomEntry(
-                            id: item.Id,
-                            published: item.Published,
-                            contentType: item.ContentType,
-                            payload: item.Description
-                        );
-                        entries.Insert(0, atomEntry);
-                        break;
-
-                    case SyndicationElementType.Link:
-                        ISyndicationLink link = await feedReader.ReadLink();
-
-                        switch (link.RelationshipType)
-                        {
-                            case "next-archive" when nextPageUri == null:
-                                nextPageUri = link.Uri;
-                                break;
-                            case "prev-archive" when previousPageUri == null:
-                                previousPageUri = link.Uri;
-                                break;
-                            case "notifications" when realTimeNotificationUri == null:
-                                realTimeNotificationUri = link.Uri;
-                                break;
-                        }
-
-                        break;
-                }
+                await ProcessElementAsync();
             }
 
             return new AtomPage(
@@ -60,6 +29,51 @@ namespace EventFeed.Consumer.EventFeed.Atom
                 realTimeNotificationUri: realTimeNotificationUri,
                 entries: entries
             );
+
+            async Task ProcessElementAsync()
+            {
+                switch (feedReader.ElementType)
+                {
+                    case SyndicationElementType.Item:
+                        await ProcessItemElementAsync();
+                        break;
+
+                    case SyndicationElementType.Link:
+                        await ProcessLinkElementAsync();
+                        break;
+                }
+            }
+
+            async Task ProcessItemElementAsync()
+            {
+                var item = (Microsoft.SyndicationFeed.Atom.AtomEntry) await feedReader.ReadItem();
+
+                var atomEntry = new AtomEntry(
+                    id: item.Id,
+                    published: item.Published,
+                    contentType: item.ContentType,
+                    payload: item.Description
+                );
+                entries.Insert(0, atomEntry);
+            }
+
+            async Task ProcessLinkElementAsync()
+            {
+                ISyndicationLink link = await feedReader.ReadLink();
+
+                switch (link.RelationshipType)
+                {
+                    case "next-archive" when nextPageUri == null:
+                        nextPageUri = link.Uri;
+                        break;
+                    case "prev-archive" when previousPageUri == null:
+                        previousPageUri = link.Uri;
+                        break;
+                    case "notifications" when realTimeNotificationUri == null:
+                        realTimeNotificationUri = link.Uri;
+                        break;
+                }
+            }
         }
     }
 }

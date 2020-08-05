@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Events;
 
@@ -15,16 +16,24 @@ namespace EventFeed.Producer.Infrastructure
                         .MinimumLevel.Is(LogEventLevel.Debug)
                         .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
                         .MinimumLevel.Override("System", LogEventLevel.Warning)
-                        .WriteTo.Console(outputTemplate:"[{Timestamp:HH:mm:ss.fff} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+                        .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
+                        .WriteTo.Console(outputTemplate:"[{Timestamp:HH:mm:ss.fff} {Level:u3}] {Message:lj} {NewLine}{Exception}")
                         .CreateLogger();
 
             try
             {
-                await WebHost.CreateDefaultBuilder<Startup>(args)
-                             .UseSerilog(logger)
-                             .UseUrls("http://localhost:5000")
-                             .Build()
-                             .RunAsync();
+                await Host.CreateDefaultBuilder(args)
+                          .ConfigureWebHostDefaults(
+                               h => h.UseStartup<Startup>()
+                                     .ConfigureLogging(
+                                          l => l.ClearProviders()
+                                                .SetMinimumLevel(LogLevel.Trace)
+                                                .AddSerilog(logger)
+                                      )
+                                     .UseUrls("http://localhost:5000")
+                           )
+                          .Build()
+                          .RunAsync();
             }
             catch (Exception ex)
             {

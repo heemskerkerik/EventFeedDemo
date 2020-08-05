@@ -12,10 +12,8 @@ namespace EventFeed.Producer.Infrastructure
             {
                 int currentClickCount = GetClickCountInternal();
 
-                using (var writer = new StreamWriter(_storage.OpenFile(FileName, FileMode.Create, FileAccess.Write)))
-                {
-                    writer.Write(currentClickCount + 1);
-                }
+                using var writer = new StreamWriter(_storage.OpenFile(FileName, FileMode.Create, FileAccess.Write));
+                writer.Write(currentClickCount + 1);
             }
         }
 
@@ -32,10 +30,8 @@ namespace EventFeed.Producer.Infrastructure
             if (!_storage.FileExists("clicks.dat"))
                 return 0;
 
-            using (var reader = new StreamReader(_storage.OpenFile(FileName, FileMode.Open, FileAccess.Read)))
-            {
-                return int.Parse(reader.ReadToEnd());
-            }
+            using var reader = new StreamReader(_storage.OpenFile(FileName, FileMode.Open, FileAccess.Read));
+            return int.Parse(reader.ReadToEnd());
         }
 
         private readonly IsolatedStorageFile _storage = IsolatedStorageFile.GetUserStoreForApplication();

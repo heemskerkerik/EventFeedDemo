@@ -23,7 +23,7 @@ namespace EventFeed.Producer.Infrastructure
             services.AddSingleton<Subject<string>>();
         }
 
-        public void Configure(IApplicationBuilder app)
+        public void Configure(IApplicationBuilder app, ILogger<Startup> logger)
         {
             bool enableSignalR = _configuration.GetValue("EnableSignalR", defaultValue: true);
 
@@ -34,20 +34,18 @@ namespace EventFeed.Producer.Infrastructure
                     if (enableSignalR)
                         r.MapHub<EventNotificationHub>("/events/notification");
                     else
-                        _logger.LogWarning("Real-time notifications of events have been disabled by configuration");
+                        logger.LogWarning("Real-time notifications of events have been disabled by configuration");
 
                     r.MapControllers();
                 }
             );
         }
 
-        public Startup(IConfiguration configuration, ILogger<Startup> logger)
+        public Startup(IConfiguration configuration)
         {
             _configuration = configuration;
-            _logger = logger;
         }
 
         private readonly IConfiguration _configuration;
-        private readonly ILogger<Startup> _logger;
     }
 }

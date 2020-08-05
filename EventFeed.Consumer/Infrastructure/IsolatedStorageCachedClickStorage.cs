@@ -13,10 +13,8 @@ namespace EventFeed.Consumer.Infrastructure
                 if (!_storage.FileExists(FileName))
                     return 0;
 
-                using (var reader = new StreamReader(_storage.OpenFile(FileName, FileMode.Open, FileAccess.Read)))
-                {
-                    return int.Parse(reader.ReadToEnd());
-                }
+                using var reader = new StreamReader(_storage.OpenFile(FileName, FileMode.Open, FileAccess.Read));
+                return int.Parse(reader.ReadToEnd());
             }
         }
 
@@ -24,10 +22,8 @@ namespace EventFeed.Consumer.Infrastructure
         {
             lock (this)
             {
-                using (var writer = new StreamWriter(_storage.OpenFile(FileName, FileMode.Create, FileAccess.Write)))
-                {
-                    writer.Write(count);
-                }
+                using var writer = new StreamWriter(_storage.OpenFile(FileName, FileMode.Create, FileAccess.Write));
+                writer.Write(count);
             }
         }
         
